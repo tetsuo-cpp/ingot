@@ -4,68 +4,41 @@ use logos::Logos;
 
 // ── Callback helpers ────────────────────────────────────────────────
 
-fn parse_gp_x(lex: &mut logos::Lexer<'_, Token>) -> Option<GpReg> {
+fn parse_reg_number(lex: &logos::Lexer<'_, Token>, max: u8) -> Option<u8> {
     let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 30 {
-        return None;
-    }
-    Some(GpReg::new(n, RegWidth::X64))
+    (n <= max).then_some(n)
+}
+
+fn parse_gp_x(lex: &mut logos::Lexer<'_, Token>) -> Option<GpReg> {
+    parse_reg_number(lex, 30).map(|n| GpReg::new(n, RegWidth::X64))
 }
 
 fn parse_gp_w(lex: &mut logos::Lexer<'_, Token>) -> Option<GpReg> {
-    let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 30 {
-        return None;
-    }
-    Some(GpReg::new(n, RegWidth::W32))
+    parse_reg_number(lex, 30).map(|n| GpReg::new(n, RegWidth::W32))
 }
 
 fn parse_fp_b(lex: &mut logos::Lexer<'_, Token>) -> Option<FpReg> {
-    let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 31 {
-        return None;
-    }
-    Some(FpReg::new(n, FpRegWidth::B))
+    parse_reg_number(lex, 31).map(|n| FpReg::new(n, FpRegWidth::B))
 }
 
 fn parse_fp_h(lex: &mut logos::Lexer<'_, Token>) -> Option<FpReg> {
-    let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 31 {
-        return None;
-    }
-    Some(FpReg::new(n, FpRegWidth::H))
+    parse_reg_number(lex, 31).map(|n| FpReg::new(n, FpRegWidth::H))
 }
 
 fn parse_fp_s(lex: &mut logos::Lexer<'_, Token>) -> Option<FpReg> {
-    let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 31 {
-        return None;
-    }
-    Some(FpReg::new(n, FpRegWidth::S))
+    parse_reg_number(lex, 31).map(|n| FpReg::new(n, FpRegWidth::S))
 }
 
 fn parse_fp_d(lex: &mut logos::Lexer<'_, Token>) -> Option<FpReg> {
-    let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 31 {
-        return None;
-    }
-    Some(FpReg::new(n, FpRegWidth::D))
+    parse_reg_number(lex, 31).map(|n| FpReg::new(n, FpRegWidth::D))
 }
 
 fn parse_fp_q(lex: &mut logos::Lexer<'_, Token>) -> Option<FpReg> {
-    let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 31 {
-        return None;
-    }
-    Some(FpReg::new(n, FpRegWidth::Q))
+    parse_reg_number(lex, 31).map(|n| FpReg::new(n, FpRegWidth::Q))
 }
 
 fn parse_vec_number(lex: &mut logos::Lexer<'_, Token>) -> Option<u8> {
-    let n: u8 = lex.slice()[1..].parse().ok()?;
-    if n > 31 {
-        return None;
-    }
-    Some(n)
+    parse_reg_number(lex, 31)
 }
 
 fn parse_decimal(lex: &mut logos::Lexer<'_, Token>) -> Option<i64> {

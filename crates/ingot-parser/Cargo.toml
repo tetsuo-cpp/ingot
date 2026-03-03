@@ -1,0 +1,12 @@
+[package]
+name = "ingot-parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ingot-types = { workspace = true }
+ingot-lexer = { workspace = true }
+miette = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

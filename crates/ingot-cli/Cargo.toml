@@ -1,0 +1,9 @@
+[package]
+name = "ingot-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ingot-asm = { workspace = true }
+miette = { workspace = true }
+clap = { workspace = true }

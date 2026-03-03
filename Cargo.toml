@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/ingot-types",
+    "crates/ingot-lexer",
+    "crates/ingot-parser",
+    "crates/ingot-encode",
+    "crates/ingot-asm",
+    "crates/ingot-object",
+    "crates/ingot-cli",
+]
+
+[workspace.dependencies]
+# Internal crates
+ingot-types = { path = "crates/ingot-types" }
+ingot-lexer = { path = "crates/ingot-lexer" }
+ingot-parser = { path = "crates/ingot-parser" }
+ingot-encode = { path = "crates/ingot-encode" }
+ingot-asm = { path = "crates/ingot-asm" }
+ingot-object = { path = "crates/ingot-object" }
+
+# External dependencies
+thiserror = "2"
+miette = { version = "7", features = ["fancy"] }
+logos = "0.14"
+object = { version = "0.36", features = ["write"] }
+clap = { version = "4", features = ["derive"] }
+pretty_assertions = "1"

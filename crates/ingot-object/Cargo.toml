@@ -1,0 +1,12 @@
+[package]
+name = "ingot-object"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ingot-types = { workspace = true }
+object = { workspace = true }
+miette = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

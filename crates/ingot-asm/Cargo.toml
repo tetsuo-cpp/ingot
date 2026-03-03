@@ -1,0 +1,15 @@
+[package]
+name = "ingot-asm"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ingot-types = { workspace = true }
+ingot-lexer = { workspace = true }
+ingot-parser = { workspace = true }
+ingot-encode = { workspace = true }
+ingot-object = { workspace = true }
+miette = { workspace = true }
+
+[dev-dependencies]
+pretty_assertions = { workspace = true }

@@ -98,30 +98,63 @@ impl Condition {
     /// Parse a condition code from a string (case-insensitive).
     /// Handles aliases: `cs` -> `hs`, `cc` -> `lo`.
     pub fn parse(s: &str) -> Option<Condition> {
-        match s.to_ascii_lowercase().as_str() {
-            "eq" => Some(Condition::Eq),
-            "ne" => Some(Condition::Ne),
-            "hs" | "cs" => Some(Condition::Hs),
-            "lo" | "cc" => Some(Condition::Lo),
-            "mi" => Some(Condition::Mi),
-            "pl" => Some(Condition::Pl),
-            "vs" => Some(Condition::Vs),
-            "vc" => Some(Condition::Vc),
-            "hi" => Some(Condition::Hi),
-            "ls" => Some(Condition::Ls),
-            "ge" => Some(Condition::Ge),
-            "lt" => Some(Condition::Lt),
-            "gt" => Some(Condition::Gt),
-            "le" => Some(Condition::Le),
-            "al" => Some(Condition::Al),
-            "nv" => Some(Condition::Nv),
-            _ => None,
+        if s.len() != 2 {
+            return None;
         }
+        if s.eq_ignore_ascii_case("eq") {
+            return Some(Condition::Eq);
+        }
+        if s.eq_ignore_ascii_case("ne") {
+            return Some(Condition::Ne);
+        }
+        if s.eq_ignore_ascii_case("hs") || s.eq_ignore_ascii_case("cs") {
+            return Some(Condition::Hs);
+        }
+        if s.eq_ignore_ascii_case("lo") || s.eq_ignore_ascii_case("cc") {
+            return Some(Condition::Lo);
+        }
+        if s.eq_ignore_ascii_case("mi") {
+            return Some(Condition::Mi);
+        }
+        if s.eq_ignore_ascii_case("pl") {
+            return Some(Condition::Pl);
+        }
+        if s.eq_ignore_ascii_case("vs") {
+            return Some(Condition::Vs);
+        }
+        if s.eq_ignore_ascii_case("vc") {
+            return Some(Condition::Vc);
+        }
+        if s.eq_ignore_ascii_case("hi") {
+            return Some(Condition::Hi);
+        }
+        if s.eq_ignore_ascii_case("ls") {
+            return Some(Condition::Ls);
+        }
+        if s.eq_ignore_ascii_case("ge") {
+            return Some(Condition::Ge);
+        }
+        if s.eq_ignore_ascii_case("lt") {
+            return Some(Condition::Lt);
+        }
+        if s.eq_ignore_ascii_case("gt") {
+            return Some(Condition::Gt);
+        }
+        if s.eq_ignore_ascii_case("le") {
+            return Some(Condition::Le);
+        }
+        if s.eq_ignore_ascii_case("al") {
+            return Some(Condition::Al);
+        }
+        if s.eq_ignore_ascii_case("nv") {
+            return Some(Condition::Nv);
+        }
+        None
     }
 }
 
 /// Memory addressing modes.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum MemoryOperand {
     /// `[Xn]`
     Base { reg: Register },
@@ -143,7 +176,7 @@ pub enum MemoryOperand {
 }
 
 /// An instruction operand.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Operand {
     Register(Register),
     Immediate(Expr),

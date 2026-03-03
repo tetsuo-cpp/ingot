@@ -64,57 +64,132 @@ impl Mnemonic {
     /// the plain `b` mnemonic, which the parser upgrades to `BCond` when
     /// a condition suffix is present.
     pub fn parse(s: &str) -> Option<Mnemonic> {
-        match s.to_ascii_lowercase().as_str() {
-            "add" => Some(Mnemonic::Add),
-            "adds" => Some(Mnemonic::Adds),
-            "sub" => Some(Mnemonic::Sub),
-            "subs" => Some(Mnemonic::Subs),
-
-            "mov" => Some(Mnemonic::Mov),
-            "movz" => Some(Mnemonic::Movz),
-            "movn" => Some(Mnemonic::Movn),
-            "movk" => Some(Mnemonic::Movk),
-
-            "cmp" => Some(Mnemonic::Cmp),
-            "cmn" => Some(Mnemonic::Cmn),
-            "tst" => Some(Mnemonic::Tst),
-
-            "and" => Some(Mnemonic::And),
-            "ands" => Some(Mnemonic::Ands),
-            "orr" => Some(Mnemonic::Orr),
-            "eor" => Some(Mnemonic::Eor),
-
-            "b" => Some(Mnemonic::B),
-            "bl" => Some(Mnemonic::Bl),
-            "br" => Some(Mnemonic::Br),
-            "blr" => Some(Mnemonic::Blr),
-            "ret" => Some(Mnemonic::Ret),
-            "cbz" => Some(Mnemonic::Cbz),
-            "cbnz" => Some(Mnemonic::Cbnz),
-
-            "adr" => Some(Mnemonic::Adr),
-            "adrp" => Some(Mnemonic::Adrp),
-
-            "ldr" => Some(Mnemonic::Ldr),
-            "str" => Some(Mnemonic::Str),
-            "ldp" => Some(Mnemonic::Ldp),
-            "stp" => Some(Mnemonic::Stp),
-            "ldrb" => Some(Mnemonic::Ldrb),
-            "ldrh" => Some(Mnemonic::Ldrh),
-            "strb" => Some(Mnemonic::Strb),
-            "strh" => Some(Mnemonic::Strh),
-
-            "nop" => Some(Mnemonic::Nop),
-            "svc" => Some(Mnemonic::Svc),
-            "brk" => Some(Mnemonic::Brk),
-
+        // Bucket by length to reduce comparisons, avoid allocation.
+        match s.len() {
+            1 => {
+                if s.eq_ignore_ascii_case("b") {
+                    return Some(Mnemonic::B);
+                }
+                None
+            }
+            2 => {
+                if s.eq_ignore_ascii_case("bl") {
+                    return Some(Mnemonic::Bl);
+                }
+                if s.eq_ignore_ascii_case("br") {
+                    return Some(Mnemonic::Br);
+                }
+                None
+            }
+            3 => {
+                if s.eq_ignore_ascii_case("add") {
+                    return Some(Mnemonic::Add);
+                }
+                if s.eq_ignore_ascii_case("sub") {
+                    return Some(Mnemonic::Sub);
+                }
+                if s.eq_ignore_ascii_case("mov") {
+                    return Some(Mnemonic::Mov);
+                }
+                if s.eq_ignore_ascii_case("cmp") {
+                    return Some(Mnemonic::Cmp);
+                }
+                if s.eq_ignore_ascii_case("cmn") {
+                    return Some(Mnemonic::Cmn);
+                }
+                if s.eq_ignore_ascii_case("tst") {
+                    return Some(Mnemonic::Tst);
+                }
+                if s.eq_ignore_ascii_case("and") {
+                    return Some(Mnemonic::And);
+                }
+                if s.eq_ignore_ascii_case("orr") {
+                    return Some(Mnemonic::Orr);
+                }
+                if s.eq_ignore_ascii_case("eor") {
+                    return Some(Mnemonic::Eor);
+                }
+                if s.eq_ignore_ascii_case("blr") {
+                    return Some(Mnemonic::Blr);
+                }
+                if s.eq_ignore_ascii_case("ret") {
+                    return Some(Mnemonic::Ret);
+                }
+                if s.eq_ignore_ascii_case("cbz") {
+                    return Some(Mnemonic::Cbz);
+                }
+                if s.eq_ignore_ascii_case("adr") {
+                    return Some(Mnemonic::Adr);
+                }
+                if s.eq_ignore_ascii_case("ldr") {
+                    return Some(Mnemonic::Ldr);
+                }
+                if s.eq_ignore_ascii_case("str") {
+                    return Some(Mnemonic::Str);
+                }
+                if s.eq_ignore_ascii_case("ldp") {
+                    return Some(Mnemonic::Ldp);
+                }
+                if s.eq_ignore_ascii_case("stp") {
+                    return Some(Mnemonic::Stp);
+                }
+                if s.eq_ignore_ascii_case("nop") {
+                    return Some(Mnemonic::Nop);
+                }
+                if s.eq_ignore_ascii_case("svc") {
+                    return Some(Mnemonic::Svc);
+                }
+                if s.eq_ignore_ascii_case("brk") {
+                    return Some(Mnemonic::Brk);
+                }
+                None
+            }
+            4 => {
+                if s.eq_ignore_ascii_case("adds") {
+                    return Some(Mnemonic::Adds);
+                }
+                if s.eq_ignore_ascii_case("subs") {
+                    return Some(Mnemonic::Subs);
+                }
+                if s.eq_ignore_ascii_case("movz") {
+                    return Some(Mnemonic::Movz);
+                }
+                if s.eq_ignore_ascii_case("movn") {
+                    return Some(Mnemonic::Movn);
+                }
+                if s.eq_ignore_ascii_case("movk") {
+                    return Some(Mnemonic::Movk);
+                }
+                if s.eq_ignore_ascii_case("ands") {
+                    return Some(Mnemonic::Ands);
+                }
+                if s.eq_ignore_ascii_case("cbnz") {
+                    return Some(Mnemonic::Cbnz);
+                }
+                if s.eq_ignore_ascii_case("adrp") {
+                    return Some(Mnemonic::Adrp);
+                }
+                if s.eq_ignore_ascii_case("ldrb") {
+                    return Some(Mnemonic::Ldrb);
+                }
+                if s.eq_ignore_ascii_case("ldrh") {
+                    return Some(Mnemonic::Ldrh);
+                }
+                if s.eq_ignore_ascii_case("strb") {
+                    return Some(Mnemonic::Strb);
+                }
+                if s.eq_ignore_ascii_case("strh") {
+                    return Some(Mnemonic::Strh);
+                }
+                None
+            }
             _ => None,
         }
     }
 }
 
 /// A parsed instruction: mnemonic + operands + source span.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Instruction {
     pub mnemonic: Mnemonic,
     pub operands: Vec<Operand>,

@@ -76,4 +76,15 @@ mod tests {
         assert_eq!(ms.offset(), 5);
         assert_eq!(ms.len(), 10);
     }
+
+    #[test]
+    fn merge_is_commutative() {
+        let a = Span::new(5, 3);
+        let b = Span::new(12, 4);
+        assert_eq!(a.merge(b), b.merge(a));
+
+        let c = Span::new(0, 10);
+        let d = Span::new(3, 2);
+        assert_eq!(c.merge(d), d.merge(c));
+    }
 }

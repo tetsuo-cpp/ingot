@@ -43,6 +43,8 @@ impl fmt::Display for GpReg {
 pub enum SpecialReg {
     /// Stack pointer (64-bit context)
     Sp,
+    /// Stack pointer (32-bit context)
+    Wsp,
     /// Zero register (64-bit)
     Xzr,
     /// Zero register (32-bit)
@@ -60,6 +62,7 @@ impl fmt::Display for SpecialReg {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             SpecialReg::Sp => write!(f, "sp"),
+            SpecialReg::Wsp => write!(f, "wsp"),
             SpecialReg::Xzr => write!(f, "xzr"),
             SpecialReg::Wzr => write!(f, "wzr"),
         }
@@ -222,6 +225,7 @@ mod tests {
     #[test]
     fn special_encoding_is_31() {
         assert_eq!(SpecialReg::Sp.encoding(), 31);
+        assert_eq!(SpecialReg::Wsp.encoding(), 31);
         assert_eq!(SpecialReg::Xzr.encoding(), 31);
         assert_eq!(SpecialReg::Wzr.encoding(), 31);
     }
@@ -244,5 +248,23 @@ mod tests {
         let sp = Register::Special(SpecialReg::Sp);
         assert_eq!(gp.encoding(), 10);
         assert_eq!(sp.encoding(), 31);
+    }
+
+    #[test]
+    fn register_display() {
+        assert_eq!(Register::Gp(GpReg::new(0, RegWidth::X64)).to_string(), "x0");
+        assert_eq!(
+            Register::Gp(GpReg::new(30, RegWidth::W32)).to_string(),
+            "w30"
+        );
+        assert_eq!(Register::Special(SpecialReg::Sp).to_string(), "sp");
+        assert_eq!(Register::Special(SpecialReg::Wsp).to_string(), "wsp");
+        assert_eq!(Register::Special(SpecialReg::Xzr).to_string(), "xzr");
+        assert_eq!(Register::Special(SpecialReg::Wzr).to_string(), "wzr");
+        assert_eq!(Register::Fp(FpReg::new(7, FpRegWidth::S)).to_string(), "s7");
+        assert_eq!(
+            Register::Vec(VecReg::new(2, VecArrangement::D2)).to_string(),
+            "v2.2d"
+        );
     }
 }

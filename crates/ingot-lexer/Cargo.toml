@@ -6,7 +6,6 @@ edition = "2021"
 [dependencies]
 ingot-types = { workspace = true }
 logos = { workspace = true }
-miette = { workspace = true }
 
 [dev-dependencies]
 pretty_assertions = { workspace = true }

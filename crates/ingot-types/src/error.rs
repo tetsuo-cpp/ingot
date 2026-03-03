@@ -1,3 +1,8 @@
+// thiserror 2.x `Display` impl triggers `unused_assignments` for named fields;
+// the allow must be module-level because it fires in the generated impl block,
+// not on the enum definition itself.
+#![allow(unused_assignments)]
+
 use miette::Diagnostic;
 use thiserror::Error;
 
@@ -5,7 +10,6 @@ use crate::span::Span;
 
 /// A single assembler error with source location.
 #[derive(Debug, Error, Diagnostic)]
-#[allow(unused_assignments)] // thiserror 2.x derive triggers this on some toolchains
 pub enum AsmError {
     #[error("unknown mnemonic `{mnemonic}`")]
     UnknownMnemonic {

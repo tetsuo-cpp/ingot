@@ -66,6 +66,21 @@ mod tests {
     use super::*;
 
     #[test]
+    fn collect_all_separates_tokens_and_errors() {
+        // "add @ x0" — the @ is invalid, the rest is valid
+        let (tokens, errors) = Lexer::collect_all("add @ x0");
+        assert_eq!(tokens.len(), 2); // Ident("add") + GpReg(x0)
+        assert_eq!(tokens[0].0, Token::Ident);
+        assert_eq!(errors.len(), 1);
+        match &errors[0] {
+            AsmError::LexError { detail, .. } => {
+                assert!(detail.contains('@'));
+            }
+            other => panic!("expected LexError, got {other:?}"),
+        }
+    }
+
+    #[test]
     fn unterminated_block_comment_error() {
         let errors: Vec<_> = Lexer::new("/* no end").filter_map(|r| r.err()).collect();
         assert_eq!(errors.len(), 1);

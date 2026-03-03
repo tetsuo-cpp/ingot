@@ -41,6 +41,8 @@ fn parse_vec_number(lex: &mut logos::Lexer<'_, Token>) -> Option<u8> {
     parse_reg_number(lex, 31)
 }
 
+// TODO: integer literals are stored as i64, which silently rejects values > i64::MAX.
+// Revisit when the encoder needs full 64-bit unsigned immediates (e.g. movz/movk sequences).
 fn parse_decimal(lex: &mut logos::Lexer<'_, Token>) -> Option<i64> {
     let s = lex.slice().replace('_', "");
     s.parse().ok()

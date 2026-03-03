@@ -48,13 +48,32 @@ impl<'src> Iterator for Lexer<'src> {
         let span = Span::new(range.start as u32, (range.end - range.start) as u32);
         Some(match result {
             Ok(token) => Ok((token, span)),
-            Err(()) => Err(AsmError::LexError {
-                detail: format!(
-                    "unexpected character `{}`",
-                    &self.source[range.start..range.end]
-                ),
-                span,
-            }),
+            Err(()) => {
+                let text = &self.source[range.start..range.end];
+                let detail = if text == "/*" {
+                    "unterminated block comment".to_string()
+                } else {
+                    format!("unexpected character `{text}`")
+                };
+                Err(AsmError::LexError { detail, span })
+            }
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unterminated_block_comment_error() {
+        let errors: Vec<_> = Lexer::new("/* no end").filter_map(|r| r.err()).collect();
+        assert_eq!(errors.len(), 1);
+        match &errors[0] {
+            AsmError::LexError { detail, .. } => {
+                assert_eq!(detail, "unterminated block comment");
+            }
+            other => panic!("expected LexError, got {other:?}"),
+        }
     }
 }

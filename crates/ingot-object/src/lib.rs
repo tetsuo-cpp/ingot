@@ -9,7 +9,7 @@ mod reloc;
 use std::collections::HashMap;
 
 use ingot_types::directive::{BuildVersion, Platform, SectionSpec};
-use ingot_types::PendingRelocation;
+use ingot_types::{PendingRelocation, RelocKind};
 use object::write::{self, Mangling, Object, Symbol};
 use object::{Architecture, BinaryFormat, Endianness, SectionKind, SymbolKind, SymbolScope};
 use thiserror::Error;
@@ -24,6 +24,9 @@ pub enum ObjectError {
 
     #[error("no current section selected")]
     NoCurrentSection,
+
+    #[error("unsupported relocation kind {kind:?}: {detail}")]
+    UnsupportedRelocation { kind: RelocKind, detail: String },
 }
 
 impl From<write::Error> for ObjectError {
@@ -208,7 +211,7 @@ impl ObjectBuilder {
         pending: &PendingRelocation,
     ) -> Result<()> {
         let symbol = self.ensure_symbol(&pending.symbol);
-        let flags = reloc::reloc_flags(pending.kind);
+        let flags = reloc::reloc_flags(pending.kind)?;
         self.obj
             .add_relocation(
                 section,
@@ -324,15 +327,9 @@ mod tests {
                 object::macho::ARM64_RELOC_GOT_LOAD_PAGEOFF12,
                 false,
             ),
-            (
-                RelocKind::Pcrel19,
-                object::macho::ARM64_RELOC_BRANCH26,
-                true,
-            ),
-            (RelocKind::Adr21, object::macho::ARM64_RELOC_PAGE21, true),
         ];
         for (kind, expected_type, expected_pcrel) in cases {
-            let flags = reloc::reloc_flags(kind);
+            let flags = reloc::reloc_flags(kind).unwrap();
             assert_eq!(
                 flags,
                 object::RelocationFlags::MachO {
@@ -342,6 +339,12 @@ mod tests {
                 }
             );
         }
+    }
+
+    #[test]
+    fn unsupported_reloc_kinds() {
+        assert!(reloc::reloc_flags(RelocKind::Pcrel19).is_err());
+        assert!(reloc::reloc_flags(RelocKind::Adr21).is_err());
     }
 
     #[test]

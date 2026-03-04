@@ -11,6 +11,25 @@ pub enum RelocModifier {
     GotLo12,
 }
 
+impl RelocModifier {
+    /// Parse a relocation modifier from a string (case-insensitive).
+    pub fn parse(s: &str) -> Option<RelocModifier> {
+        if s.eq_ignore_ascii_case("lo12") {
+            return Some(RelocModifier::Lo12);
+        }
+        if s.eq_ignore_ascii_case("pg_hi21") {
+            return Some(RelocModifier::PgHi21);
+        }
+        if s.eq_ignore_ascii_case("got") {
+            return Some(RelocModifier::Got);
+        }
+        if s.eq_ignore_ascii_case("got_lo12") {
+            return Some(RelocModifier::GotLo12);
+        }
+        None
+    }
+}
+
 /// Binary operators in assembly expressions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum BinOp {

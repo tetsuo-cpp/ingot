@@ -4,10 +4,10 @@ use ingot_types::{AsmError, Span};
 
 /// Information about a defined symbol.
 #[derive(Debug, Clone)]
-#[allow(dead_code)]
 pub struct SymbolInfo {
     pub section: (String, String),
     pub offset: u64,
+    #[allow(dead_code)]
     pub span: Span,
 }
 

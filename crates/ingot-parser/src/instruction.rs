@@ -45,19 +45,14 @@ impl Parser<'_> {
                 Some(op) => operands.push(op),
                 None => return None,
             }
+            end_span = self.prev_span();
 
             while self.eat(&Token::Comma).is_some() {
                 match self.parse_operand() {
                     Some(op) => operands.push(op),
                     None => return None,
                 }
-            }
-        }
-
-        // Compute span covering mnemonic through last operand
-        if let Some(last_pos) = self.pos.checked_sub(1) {
-            if last_pos < self.tokens.len() {
-                end_span = mnem_span.merge(self.tokens[last_pos].1);
+                end_span = self.prev_span();
             }
         }
 

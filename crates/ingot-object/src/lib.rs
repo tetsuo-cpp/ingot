@@ -165,9 +165,13 @@ impl ObjectBuilder {
     }
 
     /// Upgrade a symbol to global (dynamic) scope.
-    pub fn set_global(&mut self, name: &str) {
+    /// Returns `true` if the symbol was found and upgraded, `false` if unknown.
+    pub fn set_global(&mut self, name: &str) -> bool {
         if let Some(&id) = self.symbol_map.get(name) {
             self.obj.symbol_mut(id).scope = SymbolScope::Dynamic;
+            true
+        } else {
+            false
         }
     }
 
@@ -365,8 +369,14 @@ mod tests {
         let id = builder.symbol_id("_foo").unwrap();
         assert_eq!(builder.obj.symbol(id).scope, SymbolScope::Compilation);
 
-        builder.set_global("_foo");
+        assert!(builder.set_global("_foo"));
         assert_eq!(builder.obj.symbol(id).scope, SymbolScope::Dynamic);
+    }
+
+    #[test]
+    fn set_global_unknown_symbol() {
+        let mut builder = ObjectBuilder::new();
+        assert!(!builder.set_global("_nonexistent"));
     }
 
     #[test]

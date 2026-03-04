@@ -3,7 +3,13 @@ name = "ingot-cli"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "ingot"
+path = "src/main.rs"
+
 [dependencies]
 ingot-asm = { workspace = true }
+ingot-types = { workspace = true }
 miette = { workspace = true }
+thiserror = { workspace = true }
 clap = { workspace = true }

@@ -75,6 +75,7 @@ pub fn link_and_run(obj_bytes: &[u8]) -> i32 {
             "_main",
             "-arch",
             "arm64",
+            // Minimum deployment target; requires macOS 14+ SDK
             "-platform_version",
             "macos",
             "14.0.0",
@@ -94,6 +95,7 @@ pub fn link_and_run(obj_bytes: &[u8]) -> i32 {
     let output = std::process::Command::new(&bin_path)
         .output()
         .expect("binary should run");
+    // Signal-killed processes have no exit code; treat as -1
     output.status.code().unwrap_or(-1)
 }
 
@@ -116,7 +118,7 @@ pub fn compare_section_bytes(ingot: &[u8], clang: &[u8], section_name: &str) {
                 "section {section_name} bytes differ"
             );
         }
-        (None, None) => {}
+        (None, None) => panic!("section {section_name} missing from both ingot and clang output"),
         (Some(_), None) => panic!("section {section_name} present in ingot but not clang"),
         (None, Some(_)) => panic!("section {section_name} present in clang but not ingot"),
     }

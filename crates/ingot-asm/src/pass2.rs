@@ -15,12 +15,19 @@ pub fn pass2(
     builder: &mut ObjectBuilder,
     errors: &mut Vec<AsmError>,
 ) {
+    debug_assert!(
+        builder.current_section().is_some(),
+        "pass2 requires a current section to be set on the builder"
+    );
+
     let mut current_section = ("__TEXT".to_string(), "__text".to_string());
 
     for stmt in statements {
         match stmt {
             Statement::Label { name, span: _ } => {
-                let section = builder.current_section().unwrap();
+                let Some(section) = builder.current_section() else {
+                    continue;
+                };
                 let offset = builder.section_offset(section);
                 if let Err(e) = builder.define_symbol(name, offset, section) {
                     errors.push(AsmError::ObjectEmission {
@@ -36,8 +43,9 @@ pub fn pass2(
             Statement::Instruction(inst) => {
                 match encode(inst) {
                     Ok(encoded) => {
-                        let section = builder.current_section().unwrap();
-                        // Get the offset where this instruction will be placed
+                        let Some(section) = builder.current_section() else {
+                            continue;
+                        };
                         let offset = builder.section_offset(section);
 
                         // Resolve relocation: either patch bits or prepare linker relocation

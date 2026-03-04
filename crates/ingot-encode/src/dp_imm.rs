@@ -239,7 +239,7 @@ pub fn encode_adr_adrp(
     let reloc_kind = if is_adrp {
         RelocKind::Page21
     } else {
-        RelocKind::Pcrel19
+        RelocKind::Adr21
     };
 
     match &operands[1] {
@@ -564,5 +564,44 @@ mod tests {
         assert_eq!(enc.bits & 0x9F00_0000, 0x9000_0000);
         let reloc = enc.relocation.unwrap();
         assert_eq!(reloc.kind, RelocKind::Page21);
+    }
+
+    #[test]
+    fn adr_x0_label() {
+        let ops = vec![
+            Operand::Register(gp(0, RegWidth::X64)),
+            Operand::Label("sym".into()),
+        ];
+        let enc = encode_adr_adrp(Mnemonic::Adr, &ops, span()).unwrap();
+        assert_eq!(enc.bits & 0x9F00_0000, 0x1000_0000);
+        let reloc = enc.relocation.unwrap();
+        assert_eq!(reloc.kind, RelocKind::Adr21);
+    }
+
+    #[test]
+    fn add_imm_out_of_range() {
+        let err = encode_add_sub_imm(
+            Mnemonic::Add,
+            &gp(0, RegWidth::X64),
+            &gp(1, RegWidth::X64),
+            &Expr::Literal(0x1_000_001),
+            span(),
+        )
+        .unwrap_err();
+        assert!(matches!(err, AsmError::ImmediateOutOfRange { .. }));
+    }
+
+    #[test]
+    fn movz_wrong_operand_count() {
+        let ops = vec![Operand::Register(gp(0, RegWidth::X64))];
+        let err = encode_mov_wide(Mnemonic::Movz, &ops, span()).unwrap_err();
+        assert!(matches!(
+            err,
+            AsmError::WrongOperandCount {
+                expected: 2,
+                got: 1,
+                ..
+            }
+        ));
     }
 }

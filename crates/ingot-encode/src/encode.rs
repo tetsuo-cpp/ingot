@@ -474,6 +474,10 @@ pub(crate) fn label_reloc_from_expr(
             base,
             PendingRelocation::simple(kind, name.clone()),
         )),
+        Expr::Relocated { .. } => Err(AsmError::InvalidOperand {
+            detail: "relocation modifiers are not valid for branch targets".into(),
+            span,
+        }),
         _ => Err(AsmError::InvalidOperand {
             detail: "expected label or literal immediate".into(),
             span,
@@ -623,7 +627,7 @@ mod tests {
 
     #[test]
     fn mov_sp_x0() {
-        // mov sp, x0 → add sp, x0, #0 → 0x910003FF
+        // mov sp, x0 → add sp, x0, #0 → 0x9100001F
         let enc = encode(&make_inst(Mnemonic::Mov, vec![sp(), gp(0, RegWidth::X64)])).unwrap();
         assert_eq!(enc.bits, 0x9100_001F);
     }
@@ -683,6 +687,37 @@ mod tests {
         ))
         .unwrap();
         assert_eq!(enc.bits, 0xA9BF_7BFD);
+    }
+
+    #[test]
+    fn add_wrong_operand_count() {
+        let inst = make_inst(
+            Mnemonic::Add,
+            vec![gp(0, RegWidth::X64), gp(1, RegWidth::X64)],
+        );
+        let err = encode(&inst).unwrap_err();
+        assert!(matches!(
+            err,
+            AsmError::WrongOperandCount {
+                expected: 3,
+                got: 2,
+                ..
+            }
+        ));
+    }
+
+    #[test]
+    fn nop_with_operands() {
+        let inst = make_inst(Mnemonic::Nop, vec![imm(0)]);
+        let err = encode(&inst).unwrap_err();
+        assert!(matches!(
+            err,
+            AsmError::WrongOperandCount {
+                expected: 0,
+                got: 1,
+                ..
+            }
+        ));
     }
 
     #[test]

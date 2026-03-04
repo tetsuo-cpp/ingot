@@ -72,4 +72,6 @@ pub enum RelocKind {
     GotLoadPageOff12,
     /// 19-bit PC-relative offset (B.cond, CBZ, CBNZ, LDR literal).
     Pcrel19,
+    /// 21-bit PC-relative offset for ADR, split across immhi[23:5] and immlo[30:29].
+    Adr21,
 }

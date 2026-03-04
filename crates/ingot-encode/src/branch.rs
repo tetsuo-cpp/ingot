@@ -314,6 +314,36 @@ mod tests {
     }
 
     #[test]
+    fn b_relocated_expr_error() {
+        use ingot_types::expr::RelocModifier;
+        let ops = vec![Operand::Immediate(Expr::Relocated {
+            modifier: RelocModifier::Lo12,
+            symbol: "sym".into(),
+            addend: 0,
+        })];
+        let err = encode_b_bl(Mnemonic::B, &ops, span()).unwrap_err();
+        match &err {
+            AsmError::InvalidOperand { detail, .. } => {
+                assert!(detail.contains("relocation modifiers are not valid for branch targets"));
+            }
+            _ => panic!("expected InvalidOperand, got {err:?}"),
+        }
+    }
+
+    #[test]
+    fn b_wrong_operand_count() {
+        let err = encode_b_bl(Mnemonic::B, &[], span()).unwrap_err();
+        assert!(matches!(
+            err,
+            AsmError::WrongOperandCount {
+                expected: 1,
+                got: 0,
+                ..
+            }
+        ));
+    }
+
+    #[test]
     fn cbnz_w1_label() {
         let ops = vec![gp(1, RegWidth::W32), label("loop")];
         let enc = encode_cbz_cbnz(Mnemonic::Cbnz, &ops, span()).unwrap();

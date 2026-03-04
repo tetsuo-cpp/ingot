@@ -12,4 +12,5 @@ ingot-object = { workspace = true }
 miette = { workspace = true }
 
 [dev-dependencies]
+object = { workspace = true }
 pretty_assertions = { workspace = true }

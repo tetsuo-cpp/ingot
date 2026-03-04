@@ -92,9 +92,9 @@ pub fn encode_ldst(
 
     match &operands[1] {
         Operand::Memory(mem) => encode_ldst_mem(rt, mem, &params, span),
-        Operand::Label(name) if params.is_load => {
-            // LDR literal: opc 011000 imm19 Rt
-            encode_ldr_literal(rt, name, is_64)
+        Operand::Label(name) => {
+            let mem = MemoryOperand::Label(name.clone());
+            encode_ldst_mem(rt, &mem, &params, span)
         }
         _ => Err(AsmError::InvalidOperand {
             detail: "expected memory operand or label".into(),
@@ -547,5 +547,59 @@ mod tests {
         let enc = encode_ldst(Mnemonic::Ldr, &ops, span()).unwrap();
         let reloc = enc.relocation.unwrap();
         assert_eq!(reloc.kind, RelocKind::PageOff12);
+    }
+
+    #[test]
+    fn ldp_x0_x1_sp_offset_16() {
+        // ldp x0, x1, [sp, #16] → 0xA9410FE0
+        let ops = vec![
+            gp(0, RegWidth::X64),
+            gp(1, RegWidth::X64),
+            Operand::Memory(MemoryOperand::BaseOffset {
+                reg: sp(),
+                offset: Expr::Literal(16),
+            }),
+        ];
+        let enc = encode_ldp_stp(Mnemonic::Ldp, &ops, span()).unwrap();
+        assert_eq!(enc.bits, 0xA941_07E0);
+    }
+
+    #[test]
+    fn ldr_offset_not_aligned() {
+        let ops = vec![
+            gp(0, RegWidth::X64),
+            Operand::Memory(MemoryOperand::BaseOffset {
+                reg: gp_reg(1, RegWidth::X64),
+                offset: Expr::Literal(3),
+            }),
+        ];
+        let err = encode_ldst(Mnemonic::Ldr, &ops, span()).unwrap_err();
+        match &err {
+            AsmError::InvalidOperand { detail, .. } => {
+                assert!(detail.contains("multiple of"));
+            }
+            _ => panic!("expected InvalidOperand, got {err:?}"),
+        }
+    }
+
+    #[test]
+    fn str_label_not_valid() {
+        let ops = vec![gp(0, RegWidth::X64), Operand::Label("data".into())];
+        let err = encode_ldst(Mnemonic::Str, &ops, span()).unwrap_err();
+        assert!(matches!(err, AsmError::InvalidOperand { .. }));
+    }
+
+    #[test]
+    fn ldst_wrong_operand_count() {
+        let ops = vec![gp(0, RegWidth::X64)];
+        let err = encode_ldst(Mnemonic::Ldr, &ops, span()).unwrap_err();
+        assert!(matches!(
+            err,
+            AsmError::WrongOperandCount {
+                expected: 2,
+                got: 1,
+                ..
+            }
+        ));
     }
 }

@@ -399,10 +399,7 @@ pub fn expect_imm(op: &Operand, span: Span) -> Result<&Expr, AsmError> {
 }
 
 /// Extract a label name, a literal, or a symbol expression from an operand.
-pub fn expect_label_or_imm<'a>(
-    op: &'a Operand,
-    span: Span,
-) -> Result<LabelOrImm<'a>, AsmError> {
+pub fn expect_label_or_imm<'a>(op: &'a Operand, span: Span) -> Result<LabelOrImm<'a>, AsmError> {
     match op {
         Operand::Label(name) => Ok(LabelOrImm::Label(name)),
         Operand::Immediate(expr) => match expr.as_literal() {

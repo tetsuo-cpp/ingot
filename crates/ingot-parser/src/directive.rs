@@ -1,5 +1,3 @@
-use std::fmt::Write;
-
 use ingot_lexer::Token;
 use ingot_types::directive::{BuildVersion, Directive, Platform, SectionSpec};
 use ingot_types::Span;
@@ -129,15 +127,15 @@ impl Parser<'_> {
 
         // Version string: major.minor or major.minor.patch
         let (major, _) = self.expect_integer("expected version number")?;
-        let mut version = format!("{major}");
+        let mut version = major.to_string();
 
         if self.eat(&Token::Dot).is_some() {
             let (minor, _) = self.expect_integer("expected minor version")?;
-            write!(version, ".{minor}").unwrap();
+            version.push_str(&format!(".{minor}"));
 
             if self.eat(&Token::Dot).is_some() {
                 let (patch, _) = self.expect_integer("expected patch version")?;
-                write!(version, ".{patch}").unwrap();
+                version.push_str(&format!(".{patch}"));
             }
         }
 

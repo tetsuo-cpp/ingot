@@ -16,6 +16,25 @@ pub enum Platform {
     WatchOS,
 }
 
+impl Platform {
+    /// Parse a platform name from a string (case-insensitive).
+    pub fn parse(s: &str) -> Option<Platform> {
+        if s.eq_ignore_ascii_case("macos") {
+            return Some(Platform::MacOS);
+        }
+        if s.eq_ignore_ascii_case("ios") {
+            return Some(Platform::IOS);
+        }
+        if s.eq_ignore_ascii_case("tvos") {
+            return Some(Platform::TvOS);
+        }
+        if s.eq_ignore_ascii_case("watchos") {
+            return Some(Platform::WatchOS);
+        }
+        None
+    }
+}
+
 /// Build version metadata from `.build_version`.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BuildVersion {

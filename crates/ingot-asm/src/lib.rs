@@ -8,3 +8,4 @@ mod pass1;
 mod pass2;
 
 pub use assembler::assemble;
+pub use ingot_types::{AsmError, AsmErrors};

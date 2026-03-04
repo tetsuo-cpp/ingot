@@ -1,19 +1,28 @@
+// Each integration test binary only uses a subset of these helpers.
 #![allow(dead_code)]
 
 use std::path::PathBuf;
+use std::sync::LazyLock;
 
-/// Path to the workspace-level `tests/fixtures/` directory.
-pub fn fixtures_dir() -> PathBuf {
-    let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    PathBuf::from(manifest_dir)
+static FIXTURES_DIR: LazyLock<PathBuf> = LazyLock::new(|| {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../tests/fixtures")
         .canonicalize()
         .expect("fixtures dir should exist")
-}
+});
+
+#[cfg(target_os = "macos")]
+static SDK_PATH: LazyLock<String> = LazyLock::new(|| {
+    let output = std::process::Command::new("xcrun")
+        .args(["--show-sdk-path"])
+        .output()
+        .expect("xcrun should be available");
+    String::from_utf8(output.stdout).unwrap().trim().to_string()
+});
 
 /// Read a fixture `.s` file by category and name.
 pub fn read_fixture(category: &str, name: &str) -> String {
-    let path = fixtures_dir().join(category).join(name);
+    let path = FIXTURES_DIR.join(category).join(name);
     std::fs::read_to_string(&path)
         .unwrap_or_else(|e| panic!("failed to read {}: {}", path.display(), e))
 }
@@ -21,6 +30,11 @@ pub fn read_fixture(category: &str, name: &str) -> String {
 /// Assemble source with ingot, panic on error.
 pub fn assemble_ingot(source: &str) -> Vec<u8> {
     ingot_asm::assemble(source).expect("ingot assembly should succeed")
+}
+
+/// Read a u32 instruction from section data at the given byte offset.
+pub fn read_inst(data: &[u8], offset: usize) -> u32 {
+    u32::from_le_bytes(data[offset..offset + 4].try_into().unwrap())
 }
 
 /// Assemble source with clang, return `.o` bytes.
@@ -52,18 +66,11 @@ pub fn link_and_run(obj_bytes: &[u8]) -> i32 {
     let bin_path = dir.path().join("test");
     std::fs::write(&obj_path, obj_bytes).unwrap();
 
-    let sdk_output = std::process::Command::new("xcrun")
-        .args(["--show-sdk-path"])
-        .output()
-        .expect("xcrun should be available");
-    let sdk_path = String::from_utf8(sdk_output.stdout).unwrap();
-    let sdk_path = sdk_path.trim();
-
     let result = std::process::Command::new("ld")
         .args([
             "-lSystem",
             "-syslibroot",
-            sdk_path,
+            &SDK_PATH,
             "-e",
             "_main",
             "-arch",
@@ -120,64 +127,34 @@ pub fn compare_section_bytes(ingot: &[u8], clang: &[u8], section_name: &str) {
 pub fn compare_symbols(ingot: &[u8], clang: &[u8]) {
     use object::{Object as _, ObjectSymbol as _};
 
-    let ingot_file = object::File::parse(ingot).unwrap();
-    let clang_file = object::File::parse(clang).unwrap();
-
-    let ingot_syms: std::collections::BTreeSet<_> = ingot_file
-        .symbols()
-        .filter_map(|s| {
-            let name = s.name().ok()?;
-            if name.starts_with("ltmp") || name.is_empty() {
-                return None;
-            }
-            Some((name.to_string(), s.is_global()))
-        })
-        .collect();
-
-    let clang_syms: std::collections::BTreeSet<_> = clang_file
-        .symbols()
-        .filter_map(|s| {
-            let name = s.name().ok()?;
-            if name.starts_with("ltmp") || name.is_empty() {
-                return None;
-            }
-            Some((name.to_string(), s.is_global()))
-        })
-        .collect();
-
-    pretty_assertions::assert_eq!(ingot_syms, clang_syms, "symbols differ");
-}
-
-/// Compare relocation entries between two object files for a given section.
-#[cfg(target_os = "macos")]
-pub fn compare_relocations(ingot: &[u8], clang: &[u8], section_name: &str) {
-    use object::{Object as _, ObjectSection as _};
+    fn collect_symbols(file: &object::File) -> std::collections::BTreeSet<(String, bool)> {
+        file.symbols()
+            .filter_map(|s| {
+                let name = s.name().ok()?;
+                if name.starts_with("ltmp") || name.is_empty() {
+                    return None;
+                }
+                Some((name.to_string(), s.is_global()))
+            })
+            .collect()
+    }
 
     let ingot_file = object::File::parse(ingot).unwrap();
     let clang_file = object::File::parse(clang).unwrap();
-
-    let ingot_section = ingot_file
-        .sections()
-        .find(|s| s.name() == Ok(section_name))
-        .unwrap();
-    let clang_section = clang_file
-        .sections()
-        .find(|s| s.name() == Ok(section_name))
-        .unwrap();
-
-    let ingot_relocs: Vec<_> = ingot_section
-        .relocations()
-        .map(|(offset, reloc)| (offset, format!("{:?}", reloc.kind())))
-        .collect();
-
-    let clang_relocs: Vec<_> = clang_section
-        .relocations()
-        .map(|(offset, reloc)| (offset, format!("{:?}", reloc.kind())))
-        .collect();
 
     pretty_assertions::assert_eq!(
-        ingot_relocs,
-        clang_relocs,
-        "relocations differ in {section_name}"
+        collect_symbols(&ingot_file),
+        collect_symbols(&clang_file),
+        "symbols differ"
     );
+}
+
+/// Compare fixture assembled by both ingot and clang.
+#[cfg(target_os = "macos")]
+pub fn compare_fixture(category: &str, name: &str, section: &str) {
+    let source = read_fixture(category, name);
+    let ingot = assemble_ingot(&source);
+    let clang = assemble_clang(&source);
+    compare_section_bytes(&ingot, &clang, section);
+    compare_symbols(&ingot, &clang);
 }

@@ -1,6 +1,6 @@
 mod common;
 
-use common::{assemble_ingot, read_fixture};
+use common::{assemble_ingot, read_fixture, read_inst};
 use object::{Object as _, ObjectSection as _, ObjectSymbol as _};
 
 // ── Basic instruction fixtures ──
@@ -31,17 +31,15 @@ fn basic_branch() {
     let bytes = assemble_ingot(&source);
     let file = object::File::parse(&*bytes).unwrap();
     let text = file.sections().find(|s| s.name() == Ok("__text")).unwrap();
+    let data = text.data().unwrap();
     // b, nop, bl, nop, ret = 5 instructions
-    assert_eq!(text.data().unwrap().len(), 20);
+    assert_eq!(data.len(), 20);
 
     // Same-section branches: no relocations
-    let relocs: Vec<_> = text.relocations().collect();
-    assert_eq!(relocs.len(), 0);
+    assert_eq!(text.relocations().count(), 0);
 
     // Verify forward branch encoding (b _target skips 1 nop = offset +8, imm26=2)
-    let data = text.data().unwrap();
-    let b_inst = u32::from_le_bytes(data[0..4].try_into().unwrap());
-    let imm26 = b_inst & 0x03FF_FFFF;
+    let imm26 = read_inst(data, 0) & 0x03FF_FFFF;
     assert_eq!(imm26, 2); // +8 bytes / 4 = 2
 }
 
@@ -55,8 +53,7 @@ fn basic_cond_branch() {
     assert_eq!(text.data().unwrap().len(), 40);
 
     // All branches are same-section, so no relocations
-    let relocs: Vec<_> = text.relocations().collect();
-    assert_eq!(relocs.len(), 0);
+    assert_eq!(text.relocations().count(), 0);
 }
 
 #[test]
@@ -85,13 +82,12 @@ fn basic_system() {
     let bytes = assemble_ingot(&source);
     let file = object::File::parse(&*bytes).unwrap();
     let text = file.sections().find(|s| s.name() == Ok("__text")).unwrap();
+    let data = text.data().unwrap();
     // 3 instructions × 4 bytes = 12
-    assert_eq!(text.data().unwrap().len(), 12);
+    assert_eq!(data.len(), 12);
 
     // Verify NOP encoding
-    let data = text.data().unwrap();
-    let nop = u32::from_le_bytes(data[0..4].try_into().unwrap());
-    assert_eq!(nop, 0xD503201F);
+    assert_eq!(read_inst(data, 0), 0xD503201F);
 }
 
 // ── Directive fixtures ──
@@ -150,15 +146,9 @@ fn directives_alignment() {
     // nop (4 bytes) + padding to 16-byte boundary (12 bytes) + nop (4 bytes) = 20 bytes
     assert_eq!(data.len(), 20);
     // First instruction is NOP
-    assert_eq!(
-        u32::from_le_bytes(data[0..4].try_into().unwrap()),
-        0xD503201F
-    );
+    assert_eq!(read_inst(data, 0), 0xD503201F);
     // Last instruction is NOP at offset 16
-    assert_eq!(
-        u32::from_le_bytes(data[16..20].try_into().unwrap()),
-        0xD503201F
-    );
+    assert_eq!(read_inst(data, 16), 0xD503201F);
 }
 
 #[test]
@@ -204,7 +194,7 @@ fn directives_metadata() {
     // Check MH_SUBSECTIONS_VIA_SYMBOLS flag
     if let object::FileFlags::MachO { flags } = file.flags() {
         assert_ne!(
-            flags & 0x2000,
+            flags & object::macho::MH_SUBSECTIONS_VIA_SYMBOLS,
             0,
             "MH_SUBSECTIONS_VIA_SYMBOLS should be set"
         );
@@ -225,8 +215,7 @@ fn relocation_adrp_add() {
     // 2 instructions
     assert_eq!(text.data().unwrap().len(), 8);
     // 2 relocations (PAGE21 + PAGEOFF12)
-    let relocs: Vec<_> = text.relocations().collect();
-    assert_eq!(relocs.len(), 2);
+    assert_eq!(text.relocations().count(), 2);
 }
 
 #[test]
@@ -239,8 +228,7 @@ fn relocation_branch_extern() {
     // 1 instruction
     assert_eq!(text.data().unwrap().len(), 4);
     // 1 relocation (BRANCH26)
-    let relocs: Vec<_> = text.relocations().collect();
-    assert_eq!(relocs.len(), 1);
+    assert_eq!(text.relocations().count(), 1);
 
     // _extern_func should be an external symbol
     let ext = file
@@ -257,21 +245,18 @@ fn relocation_same_section_branch() {
     let file = object::File::parse(&*bytes).unwrap();
 
     let text = file.sections().find(|s| s.name() == Ok("__text")).unwrap();
+    let data = text.data().unwrap();
     // b + nop + nop + b = 4 instructions
-    assert_eq!(text.data().unwrap().len(), 16);
+    assert_eq!(data.len(), 16);
     // Same-section branches are resolved, no relocations
-    let relocs: Vec<_> = text.relocations().collect();
-    assert_eq!(relocs.len(), 0);
+    assert_eq!(text.relocations().count(), 0);
 
     // Verify forward branch: b _forward skips 2 nops = offset +12, imm26=3
-    let data = text.data().unwrap();
-    let b_fwd = u32::from_le_bytes(data[0..4].try_into().unwrap());
-    let imm26_fwd = b_fwd & 0x03FF_FFFF;
+    let imm26_fwd = read_inst(data, 0) & 0x03FF_FFFF;
     assert_eq!(imm26_fwd, 3);
 
     // Verify backward branch: b _start from offset 12 to 0 = -12, imm26 sign-extended
-    let b_bwd = u32::from_le_bytes(data[12..16].try_into().unwrap());
-    let imm26_bwd = b_bwd & 0x03FF_FFFF;
+    let imm26_bwd = read_inst(data, 12) & 0x03FF_FFFF;
     // -12/4 = -3, as 26-bit two's complement: 0x03FF_FFFD
     assert_eq!(imm26_bwd, 0x03FF_FFFD);
 }

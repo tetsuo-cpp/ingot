@@ -97,6 +97,7 @@ impl Parser<'_> {
         // [base] — simple base
         if self.eat(&Token::RBracket).is_some() {
             // Check for post-index: [base], #offset
+            // TODO: handle register post-index `[base], Xm` (rare, not needed for MVP)
             if self.eat(&Token::Comma).is_some() {
                 if self.eat(&Token::Hash).is_some() {
                     let offset = self.parse_expr()?;

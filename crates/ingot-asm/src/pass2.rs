@@ -20,8 +20,6 @@ pub fn pass2(
         "pass2 requires a current section to be set on the builder"
     );
 
-    let mut current_section = ("__TEXT".to_string(), "__text".to_string());
-
     for stmt in statements {
         match stmt {
             Statement::Label { name, span: _ } => {
@@ -54,7 +52,7 @@ pub fn pass2(
                                 reloc,
                                 encoded.bits,
                                 offset,
-                                &current_section,
+                                builder.current_section_name().unwrap(),
                                 ctx,
                                 inst.span,
                                 errors,
@@ -89,7 +87,7 @@ pub fn pass2(
             }
 
             Statement::Directive { directive, span } => {
-                handle_directive(directive, *span, &mut current_section, builder, errors);
+                handle_directive(directive, *span, builder, errors);
             }
         }
     }
@@ -189,22 +187,18 @@ fn resolve_relocation(
 fn handle_directive(
     directive: &Directive,
     span: Span,
-    current_section: &mut (String, String),
     builder: &mut ObjectBuilder,
     errors: &mut Vec<AsmError>,
 ) {
     match directive {
         Directive::Text => {
             builder.switch_section("__TEXT", "__text");
-            *current_section = ("__TEXT".to_string(), "__text".to_string());
         }
         Directive::Data => {
             builder.switch_section("__DATA", "__data");
-            *current_section = ("__DATA".to_string(), "__data".to_string());
         }
         Directive::Section(spec) => {
             builder.switch_section(&spec.segment, &spec.section);
-            *current_section = (spec.segment.clone(), spec.section.clone());
         }
 
         Directive::Global(name) => {

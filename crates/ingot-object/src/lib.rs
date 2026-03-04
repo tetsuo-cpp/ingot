@@ -286,7 +286,7 @@ fn parse_version(s: &str) -> u32 {
         .next()
         .and_then(|p| p.parse::<u32>().ok())
         .unwrap_or(0);
-    (major << 16) | (minor << 8) | patch
+    ((major & 0xFFFF) << 16) | ((minor & 0xFF) << 8) | (patch & 0xFF)
 }
 
 /// Infer `SectionKind` from segment and section names.
@@ -396,6 +396,15 @@ mod tests {
         assert_eq!(parse_version("11.3.1"), 0x000B_0301);
         assert_eq!(parse_version("15.2.0"), 0x000F_0200);
         assert_eq!(parse_version("12.0.0"), 0x000C_0000);
+    }
+
+    #[test]
+    fn version_parsing_overflow() {
+        // Components exceeding their field width should be masked
+        let v = parse_version("65537.256.256"); // 0x10001, 0x100, 0x100
+        assert_eq!(v >> 16, 1); // major masked to 16 bits: 0x10001 & 0xFFFF = 1
+        assert_eq!((v >> 8) & 0xFF, 0); // minor masked to 8 bits: 0x100 & 0xFF = 0
+        assert_eq!(v & 0xFF, 0); // patch masked to 8 bits: 0x100 & 0xFF = 0
     }
 
     #[test]

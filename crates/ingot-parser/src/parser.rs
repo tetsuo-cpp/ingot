@@ -41,6 +41,12 @@ impl<'src> Parser<'src> {
             })
     }
 
+    /// Return the span of the most recently consumed token.
+    pub(crate) fn prev_span(&self) -> Span {
+        assert!(self.pos > 0, "prev_span called before any advance");
+        self.tokens[self.pos - 1].1
+    }
+
     /// Peek at the token two positions ahead.
     pub(crate) fn peek2(&self) -> Option<&Token> {
         self.tokens.get(self.pos + 1).map(|(t, _)| t)

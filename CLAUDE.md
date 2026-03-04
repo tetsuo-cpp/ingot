@@ -15,6 +15,12 @@ cargo test -p ingot-types        # Test a single crate
 cargo test -p ingot-types -- register  # Run tests matching "register" in ingot-types
 cargo fmt --all -- --check       # Check formatting
 cargo clippy --workspace --all-targets -- -D warnings  # Lint (CI treats warnings as errors)
+
+# Integration tests (in ingot-asm)
+cargo test -p ingot-asm --test fixtures    # Fixture-based structural validation (cross-platform)
+cargo test -p ingot-asm --test errors      # Error path validation (cross-platform)
+cargo test -p ingot-asm --test comparison  # Byte-for-byte comparison vs clang (macOS-only)
+cargo test -p ingot-asm --test e2e         # Assemble → link → run (macOS-only)
 ```
 
 ## Architecture

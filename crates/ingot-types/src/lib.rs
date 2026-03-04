@@ -4,6 +4,7 @@ pub mod expr;
 pub mod instruction;
 pub mod operand;
 pub mod register;
+pub mod reloc;
 pub mod span;
 pub mod statement;
 
@@ -14,5 +15,6 @@ pub use expr::Expr;
 pub use instruction::{Instruction, Mnemonic};
 pub use operand::{Condition, MemoryOperand, Operand};
 pub use register::Register;
+pub use reloc::{PendingRelocation, RelocKind};
 pub use span::Span;
 pub use statement::Statement;

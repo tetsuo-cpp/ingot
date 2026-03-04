@@ -99,6 +99,13 @@ pub enum AsmError {
         #[label("cannot resolve at assembly time")]
         span: Span,
     },
+
+    #[error("object emission error: {detail}")]
+    ObjectEmission {
+        detail: String,
+        #[label("{detail}")]
+        span: Span,
+    },
 }
 
 /// A collection of assembler errors for multi-error reporting.

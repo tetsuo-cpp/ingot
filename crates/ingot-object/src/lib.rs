@@ -175,8 +175,11 @@ impl ObjectBuilder {
         }
     }
 
-    /// Declare an external (undefined) symbol.
+    /// Declare an external (undefined) symbol. Returns existing ID if already known.
     pub fn declare_external(&mut self, name: &str) -> SymbolId {
+        if let Some(&id) = self.symbol_map.get(name) {
+            return id;
+        }
         let id = self.obj.add_symbol(Symbol {
             name: name.as_bytes().to_vec(),
             value: 0,
@@ -377,6 +380,14 @@ mod tests {
     fn set_global_unknown_symbol() {
         let mut builder = ObjectBuilder::new();
         assert!(!builder.set_global("_nonexistent"));
+    }
+
+    #[test]
+    fn declare_external_dedup() {
+        let mut builder = ObjectBuilder::new();
+        let id1 = builder.declare_external("_ext");
+        let id2 = builder.declare_external("_ext");
+        assert_eq!(id1, id2);
     }
 
     #[test]

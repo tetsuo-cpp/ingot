@@ -121,6 +121,7 @@ impl Parser<'_> {
         let symbol = self.slice(sym_span).to_string();
 
         // Optional addend: +N or -N
+        // TODO: support expression addends (e.g., `:lo12:sym+offset*2`) — currently only bare integers
         let addend = if self.check(&Token::Plus) || self.check(&Token::Minus) {
             let negate = self.check(&Token::Minus);
             self.advance();

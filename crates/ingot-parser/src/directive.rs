@@ -9,6 +9,9 @@ use crate::parser::Parser;
 impl Parser<'_> {
     /// Parse directive arguments after the directive token has been identified.
     /// `name` is the directive name without the leading dot, `dir_span` is the span of the directive token.
+    ///
+    /// Note: `name` borrows from `self.source` (the `&'src str`), not from `&mut self`,
+    /// so it remains valid even as we mutate parser state throughout this method.
     pub(crate) fn parse_directive(&mut self, name: &str, dir_span: Span) -> Option<Directive> {
         match name {
             s if s.eq_ignore_ascii_case("text") => Some(Directive::Text),

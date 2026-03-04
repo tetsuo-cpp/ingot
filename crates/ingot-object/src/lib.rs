@@ -43,6 +43,7 @@ type Result<T> = std::result::Result<T, ObjectError>;
 pub struct ObjectBuilder {
     obj: Object<'static>,
     section_map: HashMap<(String, String), SectionId>,
+    section_names: HashMap<SectionId, (String, String)>,
     section_kinds: HashMap<SectionId, SectionKind>,
     symbol_map: HashMap<String, SymbolId>,
     current_section: Option<SectionId>,
@@ -60,6 +61,7 @@ impl ObjectBuilder {
         Self {
             obj,
             section_map: HashMap::new(),
+            section_names: HashMap::new(),
             section_kinds: HashMap::new(),
             symbol_map: HashMap::new(),
             current_section: None,
@@ -80,7 +82,8 @@ impl ObjectBuilder {
             section.as_bytes().to_vec(),
             kind,
         );
-        self.section_map.insert(key, id);
+        self.section_map.insert(key.clone(), id);
+        self.section_names.insert(id, key);
         self.section_kinds.insert(id, kind);
         id
     }
@@ -100,6 +103,12 @@ impl ObjectBuilder {
     /// Return the current section, if any.
     pub fn current_section(&self) -> Option<SectionId> {
         self.current_section
+    }
+
+    /// Return the (segment, section) name of the current section, if any.
+    pub fn current_section_name(&self) -> Option<&(String, String)> {
+        self.current_section
+            .and_then(|id| self.section_names.get(&id))
     }
 
     /// Return the current size of the given section.
